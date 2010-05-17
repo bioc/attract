@@ -1,0 +1,289 @@
+%\VignetteIndexEntry{Tutorial on How to Use the  Functions in the \texttt{attract} Package}
+%\VignetteKeywords{analysis, attractor, microarray}
+%\VignetteDepends{attract}
+%\VignettePackage{attract}
+%documentclass[12pt, a4paper]{article}
+\documentclass[12pt]{article}
+
+\usepackage{amsmath}
+\usepackage{hyperref}
+
+\newcommand{\scscst}{\scriptscriptstyle}
+\newcommand{\scst}{\scriptstyle}
+\newcommand{\Robject}[1]{{\texttt{#1}}}
+\newcommand{\Rfunction}[1]{{\texttt{#1}}}
+\newcommand{\Rclass}[1]{\textit{#1}}
+\newcommand{\Rpackage}[1]{\textit{#1}}
+\newcommand{\Rexpression}[1]{\texttt{#1}}
+\newcommand{\Rmethod}[1]{{\texttt{#1}}}
+\newcommand{\Rfunarg}[1]{{\texttt{#1}}}
+
+\SweaveOpts{echo=FALSE}
+
+\author{Jessica Mar} 
+\begin{document}
+\title{Using the \texttt{attract} Package To Find the Gene Expression Modules That Represent The Drivers of Kauffman's Attractor Landscape}
+
+\maketitle
+
+\section{Introduction} 
+
+A mammalian organism is made up of over 200 types of specialized cells. Each cell type carries out a specific 
+task integral to maintaining homeostasis of the organism. Cell types can vary by morphology, structure, lifespan, 
+functional ability and much more. Despite such remarkable diversity, all cells within an organism are derived from 
+an original precursor cell, and in most cases, share the same genome. Diversity comes about largely through differential 
+expression programs where cells regulate the abundance of certain gene transcripts and their downstream molecules such as 
+proteins and microRNAs. While epigenetic regulation also plays a role, finding the gene expression signatures represents the 
+key to understanding the mechanisms underlying the unique properties that cells acquire. The attractor hypothesis proposed by 
+Stuart Kauffman [1] describes how cell fate transitions between cell types occur through coordinated changes in genome-wide gene 
+expression. In our approach [2], we show how by identifying the biological processes that are differentially activated between 
+cell types, we can find the drivers of Kauffman's attractor landscape. 
+
+\section{Experimental Data Set}
+
+To illustrate our approach, we demonstrate the functions in the \texttt{attract} package on a gene expression data set 
+published by M\"{u}ller et al. [3] (NCBI GEO accession number GSE11508). The primary goal of this study was to elucidate the 
+transcription profiles characterizing different stem cell lines and their progenitors. For our purposes, we have selected a 
+subset of four cell lines - embryonic stem cells, neural stem cells, neural progenitors and teratoma-differentiated cells. 
+These lines span a spectrum of pluripotent abilities and have also been derived from a range of different tissue sources. 
+
+\begin{flushleft}
+The M\"{u}ller expression data set is stored as a matrix object \texttt{exprs.dat}, and the corresponding 
+cell line information is in the data.frame \texttt{samp.info}. \\
+\end{flushleft}
+
+<<loadlib, echo=TRUE>>=
+library(attract)
+data(exprs.dat) 
+data(samp.info)
+@
+
+\begin{flushleft}
+The functions in our package operate off Bioconductor \texttt{ExpressionSet} objects.  \\
+\end{flushleft}
+
+<<makeESet, echo=TRUE>>=
+loring.eset <- new("ExpressionSet")
+loring.eset@assayData <- new.env()
+assign("exprs", exprs.dat, loring.eset@assayData)
+p.eset <- new("AnnotatedDataFrame", data=samp.info)
+loring.eset@phenoData <- p.eset
+@
+
+\begin{flushleft}
+The first step of the analysis is to find the core pathway modules that show the most differential expression changes between the 
+four different cell types. These core pathways represent the drivers of the attractor landscape. \\
+\end{flushleft}
+
+\section{Finding Core Attractor State Pathway Modules} 
+
+The pathway modules as defined by KEGG and identified using the \texttt{GSEAlm} algorithm. These modules 
+represent the pathways with the expression profiles that discriminate between the different celltypes or 
+experimental groups of interest.
+
+<<findAttractors, echo=TRUE>>=
+attractor.states <- findAttractors(loring.eset, "celltype", nperm=10, annotation="illuminaHumanv1.db")
+@
+
+\begin{flushleft}
+The output of the \texttt{findAttractors} object is is an S4 class \texttt{AttractorModuleSet} object. \\
+\end{flushleft}
+
+\begin{flushleft}
+It contains the following slots: \\
+\end{flushleft}
+
+<<showSlots, echo=TRUE>>= 
+class(attractor.states) 
+slotNames(attractor.states) 
+@
+
+where: 
+\begin{itemize}
+	\item	\texttt{eSet} - is the \texttt{ExpressionSet} object that was supplied as input to the \texttt{findAttractors} function.
+	\item	\texttt{cellTypeTag} - is the character string denoting which variable in the \texttt{pData(eSet)} object stores the cell type or 
+						experimental group of interest info. Note that \texttt{cellTypeTag} must be one of \texttt{colnames(pData(eSet))}. 
+	\item	\texttt{incidenceMatrix} - is incidence matrix where rows correspond to KEGG pathways, columns correspond to genes. An entry of 1 at location 
+							(X,Y) in the matrix indicates membership of gene Y in pathway X (0 indicates non-membership). 
+	\item	\texttt{rankedPathways} - is a \texttt{data.frame} object that lists the KEGG pathway modules, ranked from most to least significant. 
+							The permutation P-values represent over-enrichment for each KEGG pathway from the \texttt{GSEAlm} package.
+\end{itemize}
+
+\section{Removing Flat or Uninformative Genes}
+
+We next remove genes that show no significant expression changes across the four cell types. 
+
+<<removeFlats, echo=TRUE>>=
+remove.these.genes <- removeFlatGenes(loring.eset, "celltype", contrasts=NULL, limma.cutoff=0.05)
+@
+
+\begin{flushleft}
+This step runs a LIMMA model which tests for differences in expression between any of the four cell types. More specific differences 
+can be tested instead by inputing these as a set of contrasts and supplying this object to the \texttt{contrasts} argument. 
+See \texttt{?removeFlatGenes} for more info. \\
+\end{flushleft}
+
+\section{Finding the Synexpression Groups} 
+
+Different cell or tissue types acquire their diversity by driving differentially coordinated expression patterns through interacting 
+gene networks that are broadly captured by the pathways listed in the KEGG database. We next focus on elucidating what this repertoire 
+of transcriptionally-coherent expression patterns being sustained within a pathway are, in other words the synexpression groups. 
+
+\begin{flushleft}
+A synexpression group contains genes that share similar expression profiles across the four groups. \\
+\end{flushleft}
+
+\begin{flushleft}
+As an example, we use the MAPK signaling pathway module: \\
+\end{flushleft}
+
+<<findSynE, echo=TRUE>>=
+mapk.syn <- findSynexprs("04010", attractor.states, remove.these.genes)
+@
+
+\begin{flushleft}
+The output of \texttt{findSynexpress} is an S4 class \texttt{SynExpressionSet} object \\
+\end{flushleft}
+
+<<showSynSlots, echo=TRUE>>=
+class(mapk.syn)
+slotNames(mapk.syn)
+@
+
+\begin{flushleft}
+where: \\
+\end{flushleft}
+
+\begin{itemize}
+	\item \texttt{groups} - is a \texttt{list} object containing the genes in each synexpression group (each component corresponds to a different synexpression group). 
+	\item \texttt{profiles} - is a \texttt{matrix} object that stores the average expression profiles for each synexpression group. The rows of the matrix
+			correspond to the synexpression groups, the columns correspond to the samples in the data set. 
+\end{itemize} 
+
+<<howMany, echo=TRUE>>=
+length(mapk.syn@groups) 
+sapply(mapk.syn@groups, length) 
+@
+
+\begin{flushleft}
+The number of synexpression groups is determined by an informativeness metric [4]. There are 3 synexpression groups for the MAPK pathway module. \\
+\end{flushleft}
+
+\begin{flushleft}
+Using the same \texttt{findSynexprs} function, we can find the synexpression groups for the top 5 pathway modules: \\
+\end{flushleft}
+
+<<findMultiSynE, echo=TRUE>>=
+top5.syn <- findSynexprs(attractor.states@rankedPathways[1:5,1], attractor.states, removeGenes=remove.these.genes)
+@
+
+\begin{flushleft}
+Note in this case, the output object of \texttt{findSynexprs} is an \texttt{environment} variable. \\
+\end{flushleft}
+
+\begin{flushleft}
+The keys are given as: \\
+\end{flushleft}
+
+<<demoEnv, echo=TRUE>>=
+ls(top5.syn) 
+@ 
+
+\begin{flushleft}
+Each of the values is stored as an individual \texttt{SynExpressionSet} object: \\
+\end{flushleft}
+
+<<demoClass, echo=TRUE>>=
+class(get(ls(top5.syn)[1], top5.syn))
+@
+
+\begin{figure}
+\section{Visualizing the Synexpression Groups for a Core Attractor Pathway}
+
+We can visualize the average expression profiles of the synexpression groups using base R's \texttt{plot} functions or alternatively using \texttt{plotsynexprs}.
+
+	\begin{center}
+<<plotSyn, fig=TRUE, echo=TRUE>>=
+par(mfrow=c(2,2)) 
+pretty.col <- rainbow(3) 
+for( i in 1:3 ){
+	plotsynexprs(mapk.syn, tickMarks=c(6, 28, 47, 60), tickLabels=c("ESC", "PRO", "NSC", "TER"), vertLines=c(12.5, 43.5, 51.5), index=i, 
+			main=paste("Synexpression Group ", i, sep=""), col=pretty.col[i])
+ }
+@
+	\caption{Average Expression Profiles of the Synexpression Groups}
+  \end{center}
+\end{figure}
+
+\section{Finding Correlated Partners of the Synexpression Groups} 
+
+\begin{flushleft}
+In our approach so far, the attractor pathway modules and their following synexpression groups have been 
+inferred from information restricted to well-curated sources like KEGG. As a result, these inferences are 
+of high quality and we have strong confidence in their applicability to the system under study. These benefits 
+in accuracy clearly come at the expense of low coverage because we are ultimately only describing a small proportion of the genome. \\
+\end{flushleft}
+
+\begin{flushleft}
+However by using the synexpression groups to pick up genes with highly correlated expression profiles, we can then extrapolate out to 
+make inferences about the entire set of genes in the genome. Genes with highly correlated profiles to the synexpression groups 
+(e.g. R > 0.85) are also likely to be integral in maintaining cell type-specific differences, however due to their lack of inclusion in 
+resources like KEGG, would not have been picked up by the first GSEA step. \\
+\end{flushleft}
+
+\begin{flushleft}
+For the MAPK synexpression groups, we can find out what other genes on the chip share similar expression profiles. \\
+\end{flushleft}
+
+<<findCorrP, echo=TRUE>>=
+mapk.cor <- findCorrPartners(mapk.syn, loring.eset, remove.these.genes)
+@
+
+\begin{flushleft}
+The output of \texttt{findCorrPartners} is a list which stores vectors of genes that are highly correlated with at least one gene in the 
+synexpression expression group. More or less stringent criterion can be applied by changing the \texttt{cor.cutoff} argument (default setting is 0.85). \\
+\end{flushleft}
+
+<<lookatCorr, echo=TRUE>>=
+sapply(mapk.cor@groups, length)
+@
+
+\section{Functional Enrichment Analysis of the Synexpression Groups} 
+
+For each of these correlated sets, we look for functional enrichment using GO terms to learn about any trends in common roles that these 
+genes may potentially share. 
+
+<<funcE, echo=TRUE>>=
+mapk.func <- calcFuncSynexprs(mapk.syn, attractor.states, "CC", annotation="illuminaHumanv1.db") 
+@
+
+\section{References}
+
+\begin{flushleft}
+
+[1] Kauffman S. 2004. A proposal for using the ensemble approach to understand genetic regulatory networks. J Theor Biol. 230:581. \\
+\end{flushleft}
+
+\begin{flushleft}
+[2] Mar JC, Wells CA, Quackenbush J. 2010. Identifying Gene Expression Modules that Represent the Drivers of Kauffman's 
+Attractor Landscape. To Appear.\\
+\end{flushleft}
+
+\begin{flushleft}
+[3] M\"{u}ller F et al. 2008. Regulatory networks define phenotypic classes of human stem cell lines. Nature. 455(7211): 401. \\
+\end{flushleft}
+
+\begin{flushleft}
+[4] Mar JC, Wells CA, Quackenbush J. 2010. Defining an Informativeness Metric for Clustering Gene Expression Data. To Appear.\\
+\end{flushleft}
+
+\section{Session Information}
+
+<<SessionInfo, echo=FALSE>>=
+sessionInfo()
+@
+
+\end{document}
+
+
+
