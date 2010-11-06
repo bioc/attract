@@ -16,4 +16,4 @@ Depends: R (>= 2.10.0), AnnotationDbi, KEGG.db, GOstats
 Imports: Biobase, AnnotationDbi, KEGG.db, GSEAlm, limma, cluster, GOstats,
 	 graphics, methods, stats
 Suggests: illuminaHumanv1.db
-biocViews: Statistics, GeneExpression
+biocViews: GeneExpression
