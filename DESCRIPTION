@@ -1,0 +1,23 @@
+Package: attract
+Type: Package
+Title: Methods to Find the Gene Expression Modules that Represent the
+        Drivers of Kauffman's Attractor Landscape
+Version: 1.0.9
+Date: 2010-09-30
+Author: Jessica Mar
+Maintainer: Jessica Mar <jess@jimmy.harvard.edu>
+Description: This package contains the functions to find the gene
+        expression modules that represent the drivers of Kauffman's
+        attractor landscape. The modules are the core attractor
+        pathways that discriminate between different cell types of
+        groups of interest. Each pathway has a set of synexpression
+        groups, which show transcriptionally-coordinated changes in
+        gene expression.
+License: LGPL (>= 2.0)
+Collate: classdef.R findAttractorsStep.R removeFlatGenesStep.R
+        findSynexprsStep.R findFuncEnrichAndCorr.R
+Depends: R (>= 2.10.0), AnnotationDbi, KEGG.db, GOstats
+Imports: Biobase, AnnotationDbi, KEGG.db, limma, cluster,
+        GOstats, graphics, methods, stats
+Suggests: illuminaHumanv1.db
+biocViews: Statistics, GeneExpression
