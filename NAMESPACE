@@ -1,0 +1,24 @@
+import(KEGG.db, GOstats, AnnotationDbi)
+
+
+importClassesFrom(Biobase, ExpressionSet)
+
+importClassesFrom(methods, character, data.frame, list, matrix)
+
+importMethodsFrom(Biobase, exprs, pData)
+
+importFrom(cluster, agnes)
+
+importFrom(graphics, abline, axis, box, plot)
+
+importFrom(limma, contrasts.fit, eBayes, lmFit, makeContrasts,
+           topTable)
+
+importFrom(methods, "@<-", new)
+
+importFrom(stats, anova, as.dist, as.formula, cor, cutree, lm,
+           model.matrix, p.adjust)
+
+exportPattern("^[^\\.]")
+
+exportClasses(SynExpressionSet, AttractorModuleSet)
