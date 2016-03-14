@@ -11,7 +11,7 @@
 }
 \section{Slots}{
 	 \describe{
-    \item{\code{groups}:}{A \code{list} object denoting the probes belonging to each synexpression group. }
+    \item{\code{groups}:}{A \code{list} object denoting the probes or gene IDs (rnaseq) belonging to each synexpression group. }
     \item{\code{profiles}:}{ A \code{matrix} of average expresson profiles for each synexpression group, each profile is stored as a row. }
   }
 }

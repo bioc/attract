@@ -3,10 +3,10 @@
 ############################################
 
 removeFlatGenes <- function(eSet, cellTypeTag, contrasts=NULL, limma.cutoff=0.05, ...){
-	dat.fr <- exprs(eSet) 
+	dat.fr <- exprs(eSet)
 	class.vector <- as.factor(pData(eSet)[,colnames(pData(eSet)) %in% cellTypeTag])
 
-	require(limma)
+#require(limma)
 	design <- model.matrix(~0+class.vector)
 	lev <- levels(class.vector)
 	colnames(design) <- lev

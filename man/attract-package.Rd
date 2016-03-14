@@ -13,13 +13,13 @@ This package contains functions used to determine the gene expression modules th
 \tabular{ll}{
 Package: \tab attract\cr
 Type: \tab Package\cr
-Version: \tab 1.0\cr
-Date: \tab 2010-01-21\cr
+Version: \tab 1.23.1\cr
+Date: \tab 2016-03-14\cr
 License: \tab \cr
 LazyLoad: \tab yes\cr
 }
 The method can be summarized in the following key steps: 
-(1) Determine core KEGG pathways that discriminate the most strongly between celltypes or experimental groups of interest (see \code{findAttractors)}). 
+(1) Determine core KEGG or reactome pathways that discriminate the most strongly between celltypes or experimental groups of interest (see \code{findAttractors)}). 
 (2) Find the different synexpression groups that are present within a core attractor pathway (see \code{findSynexprs}).
 (3) Find sets of genes that show highly similar profiles to the synexpression groups within an attractor pathway module (see \code{findCorrPartners}). 
 (4) Test for functional enrichment for each of the synexpression groups to detect any potentially shared biological themes (see \code{calcFuncSynexprs}). 
@@ -31,7 +31,7 @@ The method can be summarized in the following key steps:
 	Kauffman S. 2004. A proposal for using the ensemble approach to understand genetic regulatory networks. J Theor Biol. 230:581. 
 	Mar JC, Wells CA, Quackenbush J. 2010. Identifying Gene Expression Modules that Represent the Drivers of Kauffman's 
 Attractor Landscape. To Appear. 
-Müller F et al. 2008. Regulatory networks define phenotypic classes of human stem cell lines. Nature. 455(7211): 401. 
+M\"{u}ller F et al. 2008. Regulatory networks define phenotypic classes of human stem cell lines. Nature. 455(7211): 401. 
 Mar JC, Wells CA, Quackenbush J. 2010. Defining an Informativeness Metric for Clustering Gene Expression Data. To Appear. 
 }
 \examples{

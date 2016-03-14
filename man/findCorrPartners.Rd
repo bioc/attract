@@ -40,7 +40,7 @@ findCorrPartners(mySynExpressionSet, myEset, removeGenes = NULL, cor.cutoff = 0.
 }
 \examples{
 data(subset.loring.eset)
-attractor.states <- findAttractors(subset.loring.eset, "celltype", nperm=10, annotation="illuminaHumanv1.db")
+attractor.states <- findAttractors(subset.loring.eset, "celltype", annotation="illuminaHumanv1.db")
 remove.these.genes <- removeFlatGenes(subset.loring.eset, "celltype", contrasts=NULL, limma.cutoff=0.05)
 mapk.syn <- findSynexprs("04010", attractor.states, remove.these.genes)
 mapk.cor <- findCorrPartners(mapk.syn, subset.loring.eset, remove.these.genes)

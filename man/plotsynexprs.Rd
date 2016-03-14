@@ -41,7 +41,6 @@
 		Jessica Mar
 }
 \examples{
-\dontrun{
 data(subset.loring.eset)
 attractor.states <- findAttractors(subset.loring.eset, "celltype", nperm=10, annotation="illuminaHumanv1.db")
 remove.these.genes <- removeFlatGenes(subset.loring.eset, "celltype", contrasts=NULL, limma.cutoff=0.05)
@@ -52,6 +51,5 @@ for( i in 1:3 ){
 	plotsynexprs(mapk.syn, tickMarks=c(6, 28, 47, 60), tickLabels=c("ESC", "PRO", "NSC", "TER"), vertLines=c(12.5, 43.5, 51.5), index=i, 
 			main=paste("Synexpression Group ", i, sep=""), col=pretty.col[i])
  }
-}
 }
 \keyword{aplot}

@@ -9,7 +9,7 @@ expression modules, as determined using GSEA. These pathways represent those tha
 discrimination between the different cell types or tissues in the expression data set supplied. 
 }
 \usage{
-findAttractors(myEset, cellTypeTag, min.pwaysize = 5, annotation = "illuminaHumanv2BeadID.db", ...)
+findAttractors(myEset, cellTypeTag, min.pwaysize = 5, annotation = "illuminaHumanv2.db", database="KEGG", analysis="microarray", databaseGeneFormat=NULL, ...)
 }
 
 \arguments{
@@ -21,23 +21,33 @@ findAttractors(myEset, cellTypeTag, min.pwaysize = 5, annotation = "illuminaHuma
 		(this string should be one of the column names of \code{pData(myEset))}.  		
 }
   \item{min.pwaysize}{
-		\code{integer} specifying the minimum size of the KEGG pathways to consider in the analysis.  
+		\code{integer} specifying the minimum size of the KEGG or reactome pathways to consider in the analysis.  
 }
   \item{annotation}{
 		character string specifying the annotation package that corresponds to the chip platform the data was generated from. 
+}
+  \item{database}{
+  a character string specifiying what pathway database you would like to use.  
+}
+  \item{analysis}{
+  a character string specifying what type of experiment you performed, microarray or RNAseq.  
+}
+  \item{databaseGeneFormat}{
+  a character string specifying the type of identifier for a gene in a custom gene set.
+  The default value is NULL. (ex. SYMBOL, ENTREZID, REFSEQ, ENSEMBL)
 }
   \item{\dots}{
 		additional arguments.
 }
 }
 \details{
-		This function subsets the expression data so that only those genes with annotations in KEGG are used for the downstream 
+		This function subsets the expression data so that only those genes with annotations in KEGG or reactome are used for the downstream 
 		gene set enrichment analysis. This subset is stored in the eSet slot of the AttractoModuleSet output object. \cr
 		
-		The GSEAlm algorithm finds the KEGG pathway modules which discriminate between the celltypes or experimental groups of interest. 
+		The GSEAlm algorithm finds the KEGG or reactome pathway modules which discriminate between the celltypes or experimental groups of interest. 
 		It also ranks the results of the GSEAlm step by significance of these pathway modules, as stored in \code{rankedPathways}. \cr
 		
-		The output object of the \code{findAttractors} function also contains the incidence matrix that was built for the KEGG pathways, stored in 
+		The output object of the \code{findAttractors} function also contains the incidence matrix that was built for the KEGG or reactome pathways, stored in 
 		the slot \code{incidenceMatrix} and the character string denoting which column of the sample data represents the cell type or 
 		experimental groups of interest, as stored in the slot \code{cellTypeTag}. 
 		
@@ -55,6 +65,6 @@ Mar, J., C. Wells, and J. Quackenbush, Identifying the Gene Expression Modules t
 }
 \examples{
 data(subset.loring.eset)
-attractor.states <- findAttractors(subset.loring.eset, "celltype", annotation="illuminaHumanv1.db")
+attractor.states <- findAttractors(subset.loring.eset, "celltype", annotation="illuminaHumanv1.db",database="KEGG", analysis="microarray",)
 }
 \keyword{methods}

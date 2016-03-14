@@ -18,11 +18,15 @@
 \format{
   A matrix with normalized log2 expression intensities for 11044 probes on 68 samples (representing 4 different cell types).
 }
+\value{
+	A matrix object containing published gene expression data from Mueller et al. (NCBI GEO 
+  	accession id GSE11508). The data set contains 11044 probes for 68 samples.
+}
 \seealso{
 \code{\link{samp.info}}, \code{\link{loring.eset}}
 }
 \references{
-Müller F, et al., Regulatory networks define phenotypic classes of human stem cell lines. Nature, 2008. 455(7211): p. 401-405.
+M\"{u}ller F, et al., Regulatory networks define phenotypic classes of human stem cell lines. Nature, 2008. 455(7211): p. 401-405.
 }
 \examples{
 data(exprs.dat)

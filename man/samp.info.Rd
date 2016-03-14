@@ -17,11 +17,15 @@
     \item{\code{celltype}}{ A \code{vector} denoting the cell type a sample represents. }
   }
 }
+\value{
+	A sample data frame for the samples in the Mueller data set (NCBI GEO 
+  	accession id GSE11508). The data frame contains the cell type groups for the 68 samples.
+}
 \seealso{
 	\code{\link{exprs.dat}}, \code{\link{loring.eset}}
 }
 \references{
-Müller F, et al., Regulatory networks define phenotypic classes of human stem cell lines. Nature, 2008. 455(7211): p. 401-405.
+M\"{u}ller F, et al., Regulatory networks define phenotypic classes of human stem cell lines. Nature, 2008. 455(7211): p. 401-405.
 }
 \examples{
 data(samp.info)

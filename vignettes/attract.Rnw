@@ -7,6 +7,7 @@
 
 \usepackage{amsmath}
 \usepackage{hyperref}
+\usepackage{listings}
 
 \newcommand{\scscst}{\scriptscriptstyle}
 \newcommand{\scst}{\scriptstyle}
@@ -18,7 +19,16 @@
 \newcommand{\Rmethod}[1]{{\texttt{#1}}}
 \newcommand{\Rfunarg}[1]{{\texttt{#1}}}
 
-\SweaveOpts{echo=FALSE}
+<<echo=FALSE>>=
+  options(width=60)
+
+  listing <- function(x, options) {
+    paste("\\begin{lstlisting}[basicstyle=\\ttfamily,breaklines=true]\n",
+      x, "\\end{lstlisting}\n", sep = "")
+  }
+@
+
+\SweaveOpts{echo=FALSE,source=listing,output=listing}
 
 \author{Jessica Mar} 
 \begin{document}
@@ -39,8 +49,19 @@ Stuart Kauffman [1] describes how cell fate transitions between cell types occur
 expression. In our approach [2], we show how by identifying the biological processes that are differentially activated between 
 cell types, we can find the drivers of Kauffman's attractor landscape. 
 
-\section{Experimental Data Set}
+\section{Filter Data Set}
 
+Before starting the analysis you may want to filter your data if using an RNA sequencing data set. To do this
+use the funtion filterDataSet on a data frame of expression data. To filter we remove all rows (genes) where the percentage of samples
+with an expression value of 0 is 75 percent or higher. Then we add 1 to all the expression values and take the log base 2 of the data.
+You may also change the minimum percentage of samples with an expression value of 0 to remove genes with the filterPerc parameter. 
+
+<<filterData, echo=TRUE,eval=FALSE>>=
+library(attract)
+filteredData <- filterDataSet(data, filterPerc=0.75)
+@
+
+\section{Experimental Data Set}
 To illustrate our approach, we demonstrate the functions in the \texttt{attract} package on a gene expression data set 
 published by M\"{u}ller et al. [3] (NCBI GEO accession number GSE11508). The primary goal of this study was to elucidate the 
 transcription profiles characterizing different stem cell lines and their progenitors. For our purposes, we have selected a 
@@ -77,12 +98,15 @@ four different cell types. These core pathways represent the drivers of the attr
 
 \section{Finding Core Attractor State Pathway Modules} 
 
-The pathway modules as defined by KEGG and identified using the \texttt{GSEAlm} algorithm. These modules 
+The pathway modules as defined by KEGG or reactome and identified using the \texttt{GSEAlm} algorithm. These modules 
 represent the pathways with the expression profiles that discriminate between the different celltypes or 
 experimental groups of interest.
 
-<<findAttractors, echo=TRUE>>=
-attractor.states <- findAttractors(loring.eset, "celltype", nperm=10, annotation="illuminaHumanv1.db")
+<<findAttractors, echo=TRUE,keep.source=FALSE>>=
+attractor.states <- findAttractors(loring.eset, "celltype", 
+                                   annotation="illuminaHumanv1.db", 
+                                   database="KEGG",analysis="microarray",
+                                   databaseGeneFormat=NULL)
 @
 
 \begin{flushleft}
@@ -103,18 +127,19 @@ where:
 	\item	\texttt{eSet} - is the \texttt{ExpressionSet} object that was supplied as input to the \texttt{findAttractors} function.
 	\item	\texttt{cellTypeTag} - is the character string denoting which variable in the \texttt{pData(eSet)} object stores the cell type or 
 						experimental group of interest info. Note that \texttt{cellTypeTag} must be one of \texttt{colnames(pData(eSet))}. 
-	\item	\texttt{incidenceMatrix} - is incidence matrix where rows correspond to KEGG pathways, columns correspond to genes. An entry of 1 at location 
+	\item	\texttt{incidenceMatrix} - is incidence matrix where rows correspond to KEGG or reactome pathways, columns correspond to genes. An entry of 1 at location 
 							(X,Y) in the matrix indicates membership of gene Y in pathway X (0 indicates non-membership). 
-	\item	\texttt{rankedPathways} - is a \texttt{data.frame} object that lists the KEGG pathway modules, ranked from most to least significant. 
-							The permutation P-values represent over-enrichment for each KEGG pathway from the \texttt{GSEAlm} package.
+	\item	\texttt{rankedPathways} - is a \texttt{data.frame} object that lists the KEGG or reactome pathway modules, ranked from most to least significant. 
+							The permutation P-values represent over-enrichment for each KEGG or reactome pathway from the \texttt{GSEAlm} package.
 \end{itemize}
 
 \section{Removing Flat or Uninformative Genes}
 
 We next remove genes that show no significant expression changes across the four cell types. 
 
-<<removeFlats, echo=TRUE>>=
-remove.these.genes <- removeFlatGenes(loring.eset, "celltype", contrasts=NULL, limma.cutoff=0.05)
+<<removeFlats, echo=TRUE,keep.source=FALSE>>=
+remove.these.genes <- removeFlatGenes(loring.eset, "celltype", 
+                                      contrasts=NULL, limma.cutoff=0.05)
 @
 
 \begin{flushleft}
@@ -126,7 +151,7 @@ See \texttt{?removeFlatGenes} for more info. \\
 \section{Finding the Synexpression Groups} 
 
 Different cell or tissue types acquire their diversity by driving differentially coordinated expression patterns through interacting 
-gene networks that are broadly captured by the pathways listed in the KEGG database. We next focus on elucidating what this repertoire 
+gene networks that are broadly captured by the pathways listed in the KEGG or reactome database. We next focus on elucidating what this repertoire 
 of transcriptionally-coherent expression patterns being sustained within a pathway are, in other words the synexpression groups. 
 
 \begin{flushleft}
@@ -137,8 +162,9 @@ A synexpression group contains genes that share similar expression profiles acro
 As an example, we use the MAPK signaling pathway module: \\
 \end{flushleft}
 
-<<findSynE, echo=TRUE>>=
-mapk.syn <- findSynexprs("04010", attractor.states, remove.these.genes)
+<<findSynE, echo=TRUE,keep.source=FALSE>>=
+mapk.syn <- findSynexprs("04010", attractor.states, "celltype"
+                         , remove.these.genes)
 @
 
 \begin{flushleft}
@@ -173,8 +199,10 @@ The number of synexpression groups is determined by an informativeness metric [4
 Using the same \texttt{findSynexprs} function, we can find the synexpression groups for the top 5 pathway modules: \\
 \end{flushleft}
 
-<<findMultiSynE, echo=TRUE>>=
-top5.syn <- findSynexprs(attractor.states@rankedPathways[1:5,1], attractor.states, removeGenes=remove.these.genes)
+<<findMultiSynE, echo=TRUE,keep.source=FALSE>>=
+top5.syn <- findSynexprs(attractor.states@rankedPathways[1:5,1], 
+                         attractor.states, "celltype", 
+                         removeGenes=remove.these.genes)
 @
 
 \begin{flushleft}
@@ -203,12 +231,15 @@ class(get(ls(top5.syn)[1], top5.syn))
 We can visualize the average expression profiles of the synexpression groups using base R's \texttt{plot} functions or alternatively using \texttt{plotsynexprs}.
 
 	\begin{center}
-<<plotSyn, fig=TRUE, echo=TRUE>>=
+<<plotSyn, fig=TRUE, echo=TRUE,keep.source=FALSE>>=
 par(mfrow=c(2,2)) 
 pretty.col <- rainbow(3) 
 for( i in 1:3 ){
-	plotsynexprs(mapk.syn, tickMarks=c(6, 28, 47, 60), tickLabels=c("ESC", "PRO", "NSC", "TER"), vertLines=c(12.5, 43.5, 51.5), index=i, 
-			main=paste("Synexpression Group ", i, sep=""), col=pretty.col[i])
+	plotsynexprs(mapk.syn, tickMarks=c(6, 28, 47, 60), 
+               tickLabels=c("ESC", "PRO", "NSC", "TER"), 
+               vertLines=c(12.5, 43.5, 51.5), index=i, 
+			main=paste("Synexpression Group ", i, sep="")
+      ,col=pretty.col[i])
  }
 @
 	\caption{Average Expression Profiles of the Synexpression Groups}
@@ -253,8 +284,10 @@ sapply(mapk.cor@groups, length)
 For each of these correlated sets, we look for functional enrichment using GO terms to learn about any trends in common roles that these 
 genes may potentially share. 
 
-<<funcE, echo=TRUE>>=
-mapk.func <- calcFuncSynexprs(mapk.syn, attractor.states, "CC", annotation="illuminaHumanv1.db") 
+<<funcE, echo=TRUE,keep.source=FALSE>>=
+mapk.func <- calcFuncSynexprs(mapk.syn, attractor.states, "CC", 
+                              annotation="illuminaHumanv1.db"
+                              ,analysis="microarray") 
 @
 
 \section{References}

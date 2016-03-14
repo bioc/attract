@@ -7,7 +7,7 @@
 		This function performs functional enrichment for a given set of synexpression groups.
 }
 \usage{
-calcFuncSynexprs(mySynExpressionSet, myAttractorModuleSet, ontology = "BP", min.pvalue = 0.05, min.pwaysize = 5, annotation = "illuminaHumanv2BeadID.db", ...)
+calcFuncSynexprs(mySynExpressionSet, myAttractorModuleSet, ontology = "BP", min.pvalue = 0.05, min.pwaysize = 5, annotation = "illuminaHumanv2.db", analysis="microarray", ...)
 }
 \arguments{
   \item{mySynExpressionSet}{
@@ -28,6 +28,9 @@ calcFuncSynexprs(mySynExpressionSet, myAttractorModuleSet, ontology = "BP", min.
   \item{annotation}{
 		character string specifying the annotation package that corresponds to the chip platform the data was generated from. 
 }
+  \item{analysis}{
+    a character string specifying what type of experiment you performed, microarray or RNAseq.  
+}
   \item{\dots}{
 		additional arguments.
 }
@@ -47,12 +50,10 @@ calcFuncSynexprs(mySynExpressionSet, myAttractorModuleSet, ontology = "BP", min.
 Falcon, S. and R. Gentleman, Using GOstats to test gene lists for GO term association. Bioinformatics, 2007. 23(2): p. 257-8.
 }
 \examples{
-\dontrun{
 data(subset.loring.eset)
-attractor.states <- findAttractors(subset.loring.eset, "celltype", nperm=10, annotation="illuminaHumanv1.db")
+attractor.states <- findAttractors(subset.loring.eset, "celltype", nperm=10, annotation="illuminaHumanv1.db",analysis="microarray")
 remove.these.genes <- removeFlatGenes(subset.loring.eset, "celltype", contrasts=NULL, limma.cutoff=0.05)
 mapk.syn <- findSynexprs("04010", attractor.states, remove.these.genes)
 mapk.func <- calcFuncSynexprs(mapk.syn, attractor.states, "CC", annotation="illuminaHumanv1.db") 
-}
 }
 \keyword{methods}
