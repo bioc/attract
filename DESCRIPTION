@@ -2,8 +2,8 @@ Package: attract
 Type: Package
 Title: Methods to Find the Gene Expression Modules that Represent the
         Drivers of Kauffman's Attractor Landscape
-Version: 1.23.1
-Date: 2016-03-14
+Version: 1.23.2
+Date: 2016-03-15
 Author: Jessica Mar
 Maintainer: Samuel Zimmerman <sezimmer@einstein.yu.edu>
 Description: This package contains the functions to find the gene

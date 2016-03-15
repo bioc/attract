@@ -13,8 +13,8 @@ This package contains functions used to determine the gene expression modules th
 \tabular{ll}{
 Package: \tab attract\cr
 Type: \tab Package\cr
-Version: \tab 1.23.1\cr
-Date: \tab 2016-03-14\cr
+Version: \tab 1.23.2\cr
+Date: \tab 2016-03-15\cr
 License: \tab \cr
 LazyLoad: \tab yes\cr
 }

@@ -1,3 +1,7 @@
+attract 1.23.2 (2016-03-15)
+---------------------------
+Added man pages "buildCustomIncidenceMatrix.Rd", "filterDataSet.Rd", "getCustomGenes.Rd", and "getPwayGenes.Rd". We also compressed files in the data folder
+
 attract 1.23.1 (2016-03-14)
 ---------------------------
 Updated attract package for use with RNAseq data
