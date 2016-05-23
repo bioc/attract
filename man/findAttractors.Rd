@@ -9,7 +9,7 @@ expression modules, as determined using GSEA. These pathways represent those tha
 discrimination between the different cell types or tissues in the expression data set supplied. 
 }
 \usage{
-findAttractors(myEset, cellTypeTag, min.pwaysize = 5, annotation = "illuminaHumanv2.db", database="KEGG", analysis="microarray", databaseGeneFormat=NULL, ...)
+findAttractors(myEset, cellTypeTag, min.pwaysize = 5, annotation = "illuminaHumanv2.db", database="KEGG", analysis="microarray", databaseGeneFormat=NULL, expressionSetGeneFormat=NULL, ...)
 }
 
 \arguments{
@@ -24,7 +24,7 @@ findAttractors(myEset, cellTypeTag, min.pwaysize = 5, annotation = "illuminaHuma
 		\code{integer} specifying the minimum size of the KEGG or reactome pathways to consider in the analysis.  
 }
   \item{annotation}{
-		character string specifying the annotation package that corresponds to the chip platform the data was generated from. 
+		character string specifying the annotation package that corresponds to the chip platform or organism (for RNAseq data) the data was generated from. 
 }
   \item{database}{
   a character string specifiying what pathway database you would like to use.  
@@ -33,7 +33,11 @@ findAttractors(myEset, cellTypeTag, min.pwaysize = 5, annotation = "illuminaHuma
   a character string specifying what type of experiment you performed, microarray or RNAseq.  
 }
   \item{databaseGeneFormat}{
-  a character string specifying the type of identifier for a gene in a custom gene set.
+  a character string specifying the type of identifier for a gene in a database (KEGG, REACTOME, MsigDB) gene set.
+  The default value is NULL. (ex. SYMBOL, ENTREZID, REFSEQ, ENSEMBL)
+}
+  \item{expressionSetGeneFormat}{
+  a character string specifying the type of identifier for a gene in your expression data set.
   The default value is NULL. (ex. SYMBOL, ENTREZID, REFSEQ, ENSEMBL)
 }
   \item{\dots}{
@@ -65,6 +69,8 @@ Mar, J., C. Wells, and J. Quackenbush, Identifying the Gene Expression Modules t
 }
 \examples{
 data(subset.loring.eset)
-attractor.states <- findAttractors(subset.loring.eset, "celltype", annotation="illuminaHumanv1.db",database="KEGG", analysis="microarray",)
+attractor.states <- findAttractors(subset.loring.eset, "celltype", annotation="illuminaHumanv1.db",database="KEGG", analysis="microarray",databaseGeneFormat=NULL, expressionSetGeneFormat=NULL)
+MSigDBpath <- system.file("extdata","c4.cgn.v5.0.entrez.gmt",package="attract")
+attractor.states.cutsom <- findAttractors(subset.loring.eset, "celltype", annotation="illuminaHumanv1.db",database=MSigDBpath, analysis="microarray",databaseGeneFormat="ENTREZID", expressionSetGeneFormat="PROBEID")
 }
 \keyword{methods}

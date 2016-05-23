@@ -28,16 +28,30 @@
 #require("KEGGREST")
 #library(reactome.db)
 
-buildCustomIncidenceMatrix <- function(geneSetFrame, geneNames) {
+buildCustomIncidenceMatrix <- function(geneSetFrame,geneNames,databaseGeneFormat,expressionSetGeneFormat) {
     
-    pwayToGeneList <- apply(geneSetFrame, 1, function(x) x[x!=""]) #pathway to gene List
+    #pwayToGeneList <- apply(geneSetFrame, 1, function(x) x[x!=""]) #pathway to gene List
     
-    convert.to.row <- function(x.genes, row.genes){ # x.genes are list of pathways that has each gene. row.genes are all genes that have a kegg annotation
+    convert.to.row <- function(x.genes, row.genes,databaseGeneFormat,expressionSetGeneFormat){ # x.genes are list of pathways that has each gene. row.genes are all genes that have a kegg annotation
+        #if (analysis == "RNAseq") {
+        #    conversion <- select(get(annotation,envPos, as.environment(envPos)), keys=x.genes, keytype=databaseGeneFormat, columns=c(databaseGeneFormat,expressionSetGeneFormat) )
+        #    x.genes <- conversion[,2]
+        #    x.genes <- unique(x.genes)
+        #    if(length(which(is.na(x.genes))) > 0) {
+        #        x.genes <- x.genes[-which(is.na(x.genes))]
+        #    }
+        #    }
+
         res <- integer(length(row.genes)) ; res[row.genes %in% x.genes] <- 1 #see which probes are in the pathway
         return(res)
     }
-    
-    xmat <- t(sapply(lapply(pwayToGeneList, convert.to.row, geneNames), cbind))
+    #geneNames.converted <- select(get(annotation,envPos, as.environment(envPos)), keys=geneNames, keytype=databaseGeneFormat, columns=c(databaseGeneFormat,expressionSetGeneFormat) )
+    #geneNames.converted <- geneNames.converted[,2]
+    #geneNames.converted <- unique(geneNames.converted)
+    #if(length(which(is.na(geneNames.converted))) > 0) {
+    #        geneNames.converted <- geneNames.converted[-which(is.na(geneNames.converted))]
+    #}
+    xmat <- t(sapply(lapply(geneSetFrame, convert.to.row, geneNames,databaseGeneFormat,expressionSetGeneFormat), cbind))
     colnames(xmat) <- geneNames
     return(xmat)
 }
@@ -48,7 +62,7 @@ filterDataSet <- function(data,filterPerc=0.75){ #only necessary for RNAseq data
     data <- log(data +1,2)
     return(data)
 }
-findAttractors <- function(myEset, cellTypeTag, min.pwaysize=5, annotation="illuminaHumanv2.db", database="KEGG", analysis="microarray", databaseGeneFormat=NULL, ...){
+findAttractors <- function(myEset, cellTypeTag, min.pwaysize=5, annotation="illuminaHumanv2.db", database="KEGG", analysis="microarray", databaseGeneFormat=NULL, expressionSetGeneFormat=NULL, ...){
 
     require(annotation, character.only=TRUE)
 	ann <- strsplit(annotation, ".db")[[1]]
@@ -70,25 +84,32 @@ findAttractors <- function(myEset, cellTypeTag, min.pwaysize=5, annotation="illu
         rownames(geneSetFrame) <- geneSetFrame[,1]
         geneSetFrame <- geneSetFrame[,c(-1,-2)]
         geneSetFrame <- as.matrix(geneSetFrame)
-        geneNames <- unique(as.character(geneSetFrame))
-        quoteIndex <- match("",geneNames)
-        geneNames <- geneNames[-quoteIndex] # vector of all genes
-        custom.incidence.matrix <- buildCustomIncidenceMatrix(geneSetFrame, geneNames) # create incidence matrix
-        keep.pways <- apply(custom.incidence.matrix, 1, sum) >= min.pwaysize
-        custom.incidence.matrix <- custom.incidence.matrix[keep.pways,] # filter incidence matrix
+        # convert each of the gene symbols, entrez IDs, etc to same type of gene IDs (ex. ensembl) as in your original data set
+        f <- file()
+        sink(file = f,type="message")
+        geneSetFrame.convert <- apply(geneSetFrame, 1, function(x) select(get(annotation,envPos, as.environment(envPos)), keys=x[x !=""], keytype=databaseGeneFormat, columns=c(databaseGeneFormat,expressionSetGeneFormat) )[,2])
+        sink(type="message")
+        close(f)
+        geneSetFrame.convert <- lapply(geneSetFrame.convert, function(x) x[!is.na(x)])
+        geneNames <- unique(unlist(geneSetFrame.convert))
+        #custom.incidence.matrix <- buildCustomIncidenceMatrix(geneSetFrame.convert, geneNames,analysis,databaseGeneFormat,expressionSetGeneFormat) # create incidence matrix
+        #keep.pways <- apply(custom.incidence.matrix, 1, sum) >= min.pwaysize
+        #custom.incidence.matrix <- custom.incidence.matrix[keep.pways,] # filter incidence matrix
         #create list.wpway: the genes from your expression data actually in the pathways
-        if(analysis=="RNAseq") {
-            #convert genes to ENSEMBL IDs
-            genestoENSEMBL <- select(get(annotation,envPos, as.environment(envPos)), keys=geneNames, keytype=databaseGeneFormat, columns=c(databaseGeneFormat,"ENSEMBL") )
-            geneSettoENSEMBL <- unique(genestoENSEMBL$ENSEMBL) #some genes have same ensembl IDS
-            list.wpway <- sapply(rownames(dat.fr),function(x) x%in%geneSettoENSEMBL)
-            list.wpway <- names(which(list.wpway))
-        } else { # convert genes to probes
-            genestoProbe <- select(annotation, keys=geneNames, keytype=databaseGeneFormat, columns=c(databaseGeneFormat,"PROBEID")) # annotation must be package name. not str
-            geneSettoProbe <- genestoProbe$PROBEID
-            list.wpway <- sapply(rownames(dat.fr),function(x) x%in%geneSettoProbe)
-            list.wpway <- names(which(list.wpway))
-        }
+        #if(analysis=="RNAseq") {
+        #    #convert genes to ENSEMBL IDs
+        #    genestoENSEMBL <- select(get(annotation,envPos, as.environment(envPos)), keys=geneNames, keytype=databaseGeneFormat, columns=c(databaseGeneFormat,expressionSetGeneFormat) )
+        #    geneSettoENSEMBL <- unique(genestoENSEMBL[,2]) #some genes have same ensembl IDS
+        #    list.wpway <- sapply(rownames(dat.fr),function(x) x%in%geneSettoENSEMBL)
+        #    list.wpway <- names(which(list.wpway))
+        #} else { # convert genes to probes
+        #    genestoProbe <- select(annotation, keys=geneNames, keytype=databaseGeneFormat, columns=c(databaseGeneFormat,"PROBEID")) # annotation must be package name. not str
+        #    geneSettoProbe <- genestoProbe$PROBEID
+        #    list.wpway <- sapply(rownames(dat.fr),function(x) x%in%geneSettoProbe)
+        #    list.wpway <- names(which(list.wpway))
+        #}
+        list.wpway <- sapply(rownames(dat.fr),function(x) x%in%geneNames)
+        list.wpway <- names(which(list.wpway))
         
         dat.detect.wkegg <- dat.fr[rownames(dat.fr) %in% list.wpway,] # only keep genes actually in a pathway
         
@@ -98,14 +119,17 @@ findAttractors <- function(myEset, cellTypeTag, min.pwaysize=5, annotation="illu
         
         fstat <- apply(dat.detect.wkegg, 1, function(y,x){ anova(lm(y ~ x))[[4]][1] }, x=class.vector)
         fstat <- log(fstat, 2)
-        
+
         evalPway <- function(index, global){
             pway.vals <- global[index==1] # there are NAs where there are ensembl genes in the incidence matrix not in fstat
             #print("NEXT")
             #print(pway.vals)
             t.test(pway.vals, global)$p.value
         }
-        
+        custom.incidence.matrix <- buildCustomIncidenceMatrix(geneSetFrame.convert, rownames(dat.detect.wkegg),databaseGeneFormat,expressionSetGeneFormat) # create incidence matrix
+        keep.pways <- apply(custom.incidence.matrix, 1, sum) >= min.pwaysize
+        custom.incidence.matrix <- custom.incidence.matrix[keep.pways,] # filter incidence matrix
+
         t.pvals <- apply(custom.incidence.matrix, 1, evalPway, global=fstat)
         t.pvals <- p.adjust(t.pvals, "BH")
         
@@ -139,7 +163,11 @@ findAttractors <- function(myEset, cellTypeTag, min.pwaysize=5, annotation="illu
         } else if (analysis == "RNAseq") { #RNAseq option only supports ensembl genes as of now
             #myEnv <- get(paste(ann, "ENSEMBL", sep=""), envPos, as.environment(envPos)) # ensembl to gene env
             #gene.hits <- mget(intersect(all.probes, ls(org.Hs.egENSEMBL)), org.Hs.egENSEMBL)
-            ensemblToEntrez <- select(get(annotation,envPos, as.environment(envPos)), keys=all.probes, keytype="ENSEMBL", columns=c("ENSEMBL","ENTREZID") )
+            f <- file()
+            sink(file = f,type="message")
+            ensemblToEntrez <- select(get(annotation,envPos, as.environment(envPos)), keys=all.probes, keytype=expressionSetGeneFormat, columns=c(expressionSetGeneFormat,"ENTREZID") )
+            sink(type="message")
+            close(f)
             #combinedRows <- aggregate(ensmblToEntrez[,2],FUN=identity, by=list(ensmblToEntrez[,1]))
             #names(combinedRows$x) <- combinedRows$Group.1
             gene.hits <- ensemblToEntrez$ENTREZID
@@ -167,7 +195,11 @@ findAttractors <- function(myEset, cellTypeTag, min.pwaysize=5, annotation="illu
             #ensemblToEntrez <- mget(intersect(all.probes, ls(revmap(ENSEMBLEnv))), revmap(ENSEMBLEnv))
             #list.wGenes <- sort(names(ensemblToEntrez)[unlist(sapply(ensemblToEntrez, flagPwayExists))])
             #all.Genes <- unlist(mget(list.wGenes, revmap(ENSEMBLEnv)))
-            ensemblToEntrez <- select(get(annotation,envPos, as.environment(envPos)), keys=all.probes, keytype="ENSEMBL", columns=c("ENSEMBL","ENTREZID") )
+            f <- file()
+            sink(file = f,type="message")
+            ensemblToEntrez <- select(get(annotation,envPos, as.environment(envPos)), keys=all.probes, keytype=expressionSetGeneFormat, columns=c(expressionSetGeneFormat,"ENTREZID") )
+            sink(type="message")
+            close(f)
             gene.hits <- ensemblToEntrez$ENTREZID
             gene.hits <- unique(as.numeric(gene.hits)[!is.na(as.numeric(gene.hits))]) # vector of unique entrez IDs with NAs taken out
             pathEnv <- get(paste(ann, "PATH", sep=""), envPos, as.environment(envPos))
@@ -208,7 +240,7 @@ findAttractors <- function(myEset, cellTypeTag, min.pwaysize=5, annotation="illu
 	# making expression data object for pathway database annotated probes only
     if(analysis=="RNAseq" | database=="reactome") {
         allEntrezGenes <- ensemblToEntrez$ENTREZID
-        names(allEntrezGenes) <- ensemblToEntrez$ENSEMBL # you can have many pathways with a single entrez gene.
+        names(allEntrezGenes) <- ensemblToEntrez[,1] # you can have many pathways with a single entrez gene.
         dat.detect.wkegg <- dat.fr[unique(names(allEntrezGenes[allEntrezGenes %in% list.wpway])),] # find which entrez IDs are in list.wpway and then get ensembl names of them and expression data
     } else {
         dat.detect.wkegg <- dat.fr[rownames(dat.fr) %in% list.wpway,] # get all probes that are actually in a kegg pathway that are in your data set
@@ -216,7 +248,7 @@ findAttractors <- function(myEset, cellTypeTag, min.pwaysize=5, annotation="illu
     dat.detect.wkegg <- as.matrix(dat.detect.wkegg)
 
 	# make geneset incidience matrix
-	kegg.incidence.matrix <- buildKeggIncidenceMatrix(all.pways, rownames(dat.detect.wkegg), annotation, database, analysis, envPos)
+	kegg.incidence.matrix <- buildKeggIncidenceMatrix(all.pways, rownames(dat.detect.wkegg), annotation, database, analysis, envPos,expressionSetGeneFormat)
 
 	keep.pways <- apply(kegg.incidence.matrix, 1, sum) >= min.pwaysize 
 	kegg.incidence.matrix <- kegg.incidence.matrix[keep.pways,]
@@ -255,7 +287,11 @@ findAttractors <- function(myEset, cellTypeTag, min.pwaysize=5, annotation="illu
 	tab <- data.frame(KEGGID = rownames(kegg.incidence.matrix), KEGGNAME = namesInMatrix, AdjustedPvalues = t.pvals, NumberDetectedGenes = size)
     } else if(database=="reactome") {
         #tab <- data.frame(KEGGID = rownames(kegg.incidence.matrix), KEGGNAME = unlist(mget(rownames(kegg.incidence.matrix), reactomePATHID2NAME)), AdjustedPvalues = t.pvals, NumberDetectedGenes = size)
+        f <- file()
+        sink(file = f,type="message")
         tab <- data.frame(reactomeID = rownames(kegg.incidence.matrix), reactomeNAME = select(reactome.db, keys=rownames(kegg.incidence.matrix), keytype="PATHID", columns=c("PATHID","PATHNAME") )$PATHNAME, AdjustedPvalues = t.pvals, NumberDetectedGenes = size)
+        sink(type="message")
+        close(f)
 
     }
 	tab <- tab[order(t.pvals),]
@@ -293,14 +329,18 @@ flagPwayExists <- function(x){
 	else{ flag <- TRUE }
 }
 
-buildKeggIncidenceMatrix <- function(kegg.ids, gene.ids, annotation, database, analysis, envPos){
+buildKeggIncidenceMatrix <- function(kegg.ids, gene.ids, annotation, database, analysis, envPos,expressionSetGeneFormat){
 	if( analysis=="RNAseq") {
         if( database=="reactome") {
             pway.genes <- mget(kegg.ids, reactomePATHID2EXTID) #converts reactome pathways back to entrez IDs
         } else {
             require(annotation, character.only=TRUE)
             ann <- strsplit(annotation, ".db")[[1]]
+            f <- file()
+            sink(file = f,type="message")
             path2probe <- select(get(annotation,envPos, as.environment(envPos)), keys=kegg.ids, keytype="PATH", columns=c("PATH","ENTREZID") )
+            sink(type="message")
+            close(f)
             pway.genes <- sapply(kegg.ids, function(x) path2probe[path2probe$PATH==x,2])
             #pway.genes <- path2probe$ENTREZID
             #pway.genes <- unique(pway.genes) # vector of unique entrez IDs with NAs taken out
@@ -331,13 +371,17 @@ buildKeggIncidenceMatrix <- function(kegg.ids, gene.ids, annotation, database, a
         pway.genes <- mget(kegg.ids, path2probeEnv) #a list of pathways that has each probe in the pathway
 		
     }
-    convert.to.row <- function(x.genes, row.genes, envPos){ # x.genes are list of pathways that has each gene. row.genes are all genes that have a kegg annotation
+    convert.to.row <- function(x.genes, row.genes, envPos,expressionSetGeneFormat){ # x.genes are list of pathways that has each gene. row.genes are all genes that have a kegg annotation
         if (analysis == "RNAseq") {
             #if( database == "KEGG") {
                 #x.genes <- sapply(strsplit(x.genes,":"), function(x) x[2])
             #}
-            entrez2Ensmbl <- select(get(annotation,envPos, as.environment(envPos)), keys=x.genes, keytype="ENTREZID", columns=c("ENTREZID","ENSEMBL") )
-            x.genes <- entrez2Ensmbl$ENSEMBL
+            f <- file()
+            sink(file = f,type="message")
+            entrez2Ensmbl <- select(get(annotation,envPos, as.environment(envPos)), keys=x.genes, keytype="ENTREZID", columns=c("ENTREZID",expressionSetGeneFormat) )
+            sink(type="message")
+            close(f)
+            x.genes <- entrez2Ensmbl[,2]
             x.genes <- unique(x.genes)
             if(length(which(is.na(x.genes))) > 0) {
                 x.genes <- x.genes[-which(is.na(x.genes))]
@@ -347,7 +391,7 @@ buildKeggIncidenceMatrix <- function(kegg.ids, gene.ids, annotation, database, a
         return(res)
     }
 
-    xmat <- t(sapply(lapply(pway.genes, convert.to.row, gene.ids, envPos), cbind))
+    xmat <- t(sapply(lapply(pway.genes, convert.to.row, gene.ids, envPos,expressionSetGeneFormat), cbind))
     rownames(xmat) <- kegg.ids ; colnames(xmat) <- gene.ids
     return(xmat)
 

@@ -7,7 +7,7 @@
 		This function builds an incidence matrix for custom gene sets.
 }
 \usage{
-buildCustomIncidenceMatrix(geneSetFrame, geneNames)
+buildCustomIncidenceMatrix(geneSetFrame, geneNames, databaseGeneFormat, expressionSetGeneFormat)
 }
 \arguments{
   \item{geneSetFrame}{
@@ -15,6 +15,14 @@ buildCustomIncidenceMatrix(geneSetFrame, geneNames)
 }
   \item{geneNames}{
 		a \code{vector} of all the genes in the geneSetFrame \code{dataframe}
+}
+  \item{databaseGeneFormat}{
+  a character string specifying the type of identifier for a gene in a database (KEGG, reactome, MsigDB) gene set.
+  The default value is NULL. (ex. SYMBOL, ENTREZID, REFSEQ, ENSEMBL)
+}
+  \item{expressionSetGeneFormat}{
+  a character string specifying the type of identifier for a gene in your expression data set.
+  The default value is NULL. (ex. SYMBOL, ENTREZID, REFSEQ, ENSEMBL)
 }
 }
 \details{

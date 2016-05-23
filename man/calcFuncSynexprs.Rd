@@ -7,7 +7,7 @@
 		This function performs functional enrichment for a given set of synexpression groups.
 }
 \usage{
-calcFuncSynexprs(mySynExpressionSet, myAttractorModuleSet, ontology = "BP", min.pvalue = 0.05, min.pwaysize = 5, annotation = "illuminaHumanv2.db", analysis="microarray", ...)
+calcFuncSynexprs(mySynExpressionSet, myAttractorModuleSet, ontology = "BP", min.pvalue = 0.05, min.pwaysize = 5, annotation = "illuminaHumanv2.db", analysis="microarray", expressionSetGeneFormat=NULL, ...)
 }
 \arguments{
   \item{mySynExpressionSet}{
@@ -30,6 +30,10 @@ calcFuncSynexprs(mySynExpressionSet, myAttractorModuleSet, ontology = "BP", min.
 }
   \item{analysis}{
     a character string specifying what type of experiment you performed, microarray or RNAseq.  
+}
+  \item{expressionSetGeneFormat}{
+  a character string specifying the type of identifier for a gene in your expression data set.
+  The default value is NULL. (ex. SYMBOL, ENTREZID, REFSEQ, ENSEMBL)
 }
   \item{\dots}{
 		additional arguments.
@@ -54,6 +58,6 @@ data(subset.loring.eset)
 attractor.states <- findAttractors(subset.loring.eset, "celltype", nperm=10, annotation="illuminaHumanv1.db",analysis="microarray")
 remove.these.genes <- removeFlatGenes(subset.loring.eset, "celltype", contrasts=NULL, limma.cutoff=0.05)
 mapk.syn <- findSynexprs("04010", attractor.states, remove.these.genes)
-mapk.func <- calcFuncSynexprs(mapk.syn, attractor.states, "CC", annotation="illuminaHumanv1.db") 
+mapk.func <- calcFuncSynexprs(mapk.syn, attractor.states, "CC", annotation="illuminaHumanv1.db", analysis="microarray", expressionSetGeneFormat=NULL) 
 }
 \keyword{methods}

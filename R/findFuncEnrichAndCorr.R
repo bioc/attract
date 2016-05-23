@@ -3,13 +3,17 @@
 # Step 4 - functional enrichment for the synexpression groups
 ###########################################################################
 
-calcFuncSynexprs <- function(mySynExpressionSet, myAttractorModuleSet, ontology="BP", min.pvalue=.05, min.pwaysize=5, annotation="illuminaHumanv2.db", analysis="microarray", ...){
+calcFuncSynexprs <- function(mySynExpressionSet, myAttractorModuleSet, ontology="BP", min.pvalue=.05, min.pwaysize=5, annotation="illuminaHumanv2.db", analysis="microarray", expressionSetGeneFormat=NULL, ...){
     #require(GOstats)
     if (analysis=="RNAseq") {
         require(annotation, character.only=TRUE)
         loadNamespace(annotation)
         envPos <- match(paste("package:", annotation, sep=""), search())
-        gene.uni <- select(get(annotation,envPos, as.environment(envPos)), keys=rownames(exprs(myAttractorModuleSet@eSet)), keytype="ENSEMBL", columns=c("ENSEMBL","ENTREZID") )
+        f <- file()
+        sink(file = f,type="message")
+        gene.uni <- select(get(annotation,envPos, as.environment(envPos)), keys=rownames(exprs(myAttractorModuleSet@eSet)), keytype=expressionSetGeneFormat, columns=c(expressionSetGeneFormat,"ENTREZID") )
+        sink(type="message")
+        close(f)
         entrez.uni <- gene.uni$ENTREZID
         entrez.uni <- unique(entrez.uni)
         entrez.uni <- entrez.uni[!is.na(entrez.uni)]
@@ -20,13 +24,16 @@ calcFuncSynexprs <- function(mySynExpressionSet, myAttractorModuleSet, ontology=
         entrez.uni <- unique(unlist(mget(intersect(gene.uni, ls(entrezEnv)), entrezEnv)))
         entrez.uni <- entrez.uni[!is.na(entrez.uni)]
     }
-    calc.func.onesyngroup <- function(onesyngroup, entrezEnv, entrez.uni, annotation, ontology, analysis){
+    calc.func.onesyngroup <- function(onesyngroup, entrezEnv, entrez.uni, annotation, ontology, analysis,expressionSetGeneFormat){
         if (analysis=="RNAseq") {
             require(annotation, character.only=TRUE)
             loadNamespace(annotation)
             envPos <- match(paste("package:", annotation, sep=""), search())
-            
-            ensemblToEntrez <- select(get(annotation,envPos, as.environment(envPos)), keys=onesyngroup, keytype="ENSEMBL", columns=c("ENSEMBL","ENTREZID") )
+            f <- file()
+            sink(file = f,type="message")
+            ensemblToEntrez <- select(get(annotation,envPos, as.environment(envPos)), keys=onesyngroup, keytype=expressionSetGeneFormat, columns=c(expressionSetGeneFormat,"ENTREZID") )
+            sink(type="message")
+            close(f)
             entrez.mgenes <- unique(ensemblToEntrez$ENTREZID)
             entrez.mgenes <- entrez.mgenes[!is.na(entrez.mgenes)]
         } else {
@@ -49,7 +56,7 @@ calcFuncSynexprs <- function(mySynExpressionSet, myAttractorModuleSet, ontology=
         
         return(xtab)
     }
-    return(lapply(mySynExpressionSet@groups, calc.func.onesyngroup, entrezEnv, entrez.uni, annotation, ontology, analysis))
+    return(lapply(mySynExpressionSet@groups, calc.func.onesyngroup, entrezEnv, entrez.uni, annotation, ontology, analysis,expressionSetGeneFormat))
 }
 
 findCorrPartners <- function(mySynExpressionSet, myEset, removeGenes=NULL, cor.cutoff=0.85, ...){ 

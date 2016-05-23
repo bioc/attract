@@ -10,13 +10,17 @@ importFrom(GOstats, hyperGTest)
 
 importFrom(cluster, agnes)
 
+importFrom(utils, count.fields, read.table)
+
+
+
 importFrom(graphics, abline, axis, box, plot)
 
 importFrom(limma, contrasts.fit, eBayes, lmFit, makeContrasts,
            topTable)
 
 importFrom(stats, anova, as.dist, as.formula, cor, cutree, lm,
-           model.matrix, p.adjust)
+           model.matrix, p.adjust, t.test)
 
 export(filterDataSet, findAttractors, removeFlatGenes, findSynexprs, plotsynexprs, findCorrPartners, calcFuncSynexprs)
 

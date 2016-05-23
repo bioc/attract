@@ -7,7 +7,7 @@
 		Internal function - buildings the KEGG incidence matrix requird by GSEAlm.
 }
 \usage{
-buildKeggIncidenceMatrix(kegg.ids, gene.ids, annotation, database, analysis, envPos)
+buildKeggIncidenceMatrix(kegg.ids, gene.ids, annotation, database, analysis, envPos, expressionSetGeneFormat)
 }
 \arguments{
   \item{kegg.ids}{
@@ -27,6 +27,10 @@ buildKeggIncidenceMatrix(kegg.ids, gene.ids, annotation, database, analysis, env
 }
   \item{envPos}{
   	the position of the annotation package in the R search path. 
+}
+  \item{expressionSetGeneFormat}{
+  a character string specifying the type of identifier for a gene in your expression data set.
+  The default value is NULL. (ex. SYMBOL, ENTREZID, REFSEQ, ENSEMBL)
 }
 }
 \details{
