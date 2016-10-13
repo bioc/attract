@@ -9,14 +9,16 @@ calcFuncSynexprs <- function(mySynExpressionSet, myAttractorModuleSet, ontology=
         require(annotation, character.only=TRUE)
         loadNamespace(annotation)
         envPos <- match(paste("package:", annotation, sep=""), search())
-        f <- file()
-        sink(file = f,type="message")
-        gene.uni <- select(get(annotation,envPos, as.environment(envPos)), keys=rownames(exprs(myAttractorModuleSet@eSet)), keytype=expressionSetGeneFormat, columns=c(expressionSetGeneFormat,"ENTREZID") )
-        sink(type="message")
-        close(f)
-        entrez.uni <- gene.uni$ENTREZID
-        entrez.uni <- unique(entrez.uni)
-        entrez.uni <- entrez.uni[!is.na(entrez.uni)]
+        if(expressionSetGeneFormat == "ENTREZID") {
+            gene.uni <- rownames(exprs(myAttractorModuleSet@eSet))
+            entrez.uni <- gene.uni
+        } else {
+            gene.uni <- select(get(annotation,envPos, as.environment(envPos)), keys=rownames(exprs(myAttractorModuleSet@eSet)), keytype=expressionSetGeneFormat, columns=c(expressionSetGeneFormat,"ENTREZID") )
+            entrez.uni <- gene.uni$ENTREZID
+            entrez.uni <- unique(entrez.uni)
+            entrez.uni <- entrez.uni[!is.na(entrez.uni)]
+            entrezEnv <- NULL
+        }
     } else {
         ann <- strsplit(annotation, ".db")[[1]]
         entrezEnv <- get(paste(ann, "ENTREZID", sep=""))
@@ -29,13 +31,14 @@ calcFuncSynexprs <- function(mySynExpressionSet, myAttractorModuleSet, ontology=
             require(annotation, character.only=TRUE)
             loadNamespace(annotation)
             envPos <- match(paste("package:", annotation, sep=""), search())
-            f <- file()
-            sink(file = f,type="message")
-            ensemblToEntrez <- select(get(annotation,envPos, as.environment(envPos)), keys=onesyngroup, keytype=expressionSetGeneFormat, columns=c(expressionSetGeneFormat,"ENTREZID") )
-            sink(type="message")
-            close(f)
-            entrez.mgenes <- unique(ensemblToEntrez$ENTREZID)
-            entrez.mgenes <- entrez.mgenes[!is.na(entrez.mgenes)]
+            if(expressionSetGeneFormat == "ENTREZID") {
+                ensemblToEntrez <- onesyngroup
+                entrez.mgenes <- ensemblToEntrez
+            } else {
+                ensemblToEntrez <- select(get(annotation,envPos, as.environment(envPos)), keys=onesyngroup, keytype=expressionSetGeneFormat, columns=c(expressionSetGeneFormat,"ENTREZID") )
+                entrez.mgenes <- unique(ensemblToEntrez$ENTREZID)
+                entrez.mgenes <- entrez.mgenes[!is.na(entrez.mgenes)]
+            }
         } else {
             entrez.mgenes <- unique(unlist(mget(intersect(onesyngroup, ls(entrezEnv)), entrezEnv)))
             entrez.mgenes <- entrez.mgenes[!is.na(entrez.mgenes)]

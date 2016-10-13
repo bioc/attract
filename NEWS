@@ -1,3 +1,7 @@
+attract 1.25.2 (2016-10-13)
+---------------------------
+Update attract to accept MsigDB data sets in both .gmt and .gmx file formats. Before it was just .gmt files. An error is thrown if custom gene sets are not in .gmt or .gmx format. Also update attract to correct bug when you use reactome database and microarray data.
+
 attract 1.25.1 (2016-05-23)
 ---------------------------
 Corrected bug found when using MsigDB data sets instead of KEGG and reactome. Also added expressionSetGeneFormat to findAttractors and calcFuncSynexprs functions. The vignette was also changed to reflect the update.

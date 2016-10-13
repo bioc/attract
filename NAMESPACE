@@ -12,8 +12,6 @@ importFrom(cluster, agnes)
 
 importFrom(utils, count.fields, read.table)
 
-
-
 importFrom(graphics, abline, axis, box, plot)
 
 importFrom(limma, contrasts.fit, eBayes, lmFit, makeContrasts,

@@ -28,7 +28,7 @@
 #require("KEGGREST")
 #library(reactome.db)
 
-buildCustomIncidenceMatrix <- function(geneSetFrame,geneNames,databaseGeneFormat,expressionSetGeneFormat) {
+buildCustomIncidenceMatrix <- function(geneSetFrame,geneNames,databaseGeneFormat,expressionSetGeneFormat,geneSetNames) {
     
     #pwayToGeneList <- apply(geneSetFrame, 1, function(x) x[x!=""]) #pathway to gene List
     
@@ -51,7 +51,14 @@ buildCustomIncidenceMatrix <- function(geneSetFrame,geneNames,databaseGeneFormat
     #if(length(which(is.na(geneNames.converted))) > 0) {
     #        geneNames.converted <- geneNames.converted[-which(is.na(geneNames.converted))]
     #}
-    xmat <- t(sapply(lapply(geneSetFrame, convert.to.row, geneNames,databaseGeneFormat,expressionSetGeneFormat), cbind))
+    if(length(geneSetNames) >1) {
+        xmat <- t(sapply(lapply(geneSetFrame, convert.to.row, geneNames,databaseGeneFormat,expressionSetGeneFormat), cbind))
+    }
+    else {
+        xmat <- convert.to.row(unlist(geneSetFrame), geneNames, databaseGeneFormat,expressionSetGeneFormat)
+        xmat <- matrix(xmat,nrow=1,)
+        rownames(xmat) <- geneSetNames
+    }
     colnames(xmat) <- geneNames
     return(xmat)
 }
@@ -79,8 +86,17 @@ findAttractors <- function(myEset, cellTypeTag, min.pwaysize=5, annotation="illu
     #do if using a custom database
     if(database!="KEGG" & database!= "reactome") {
         # create data frame for custom geneSet and vector of all the genes
-        maxColumns <- max(count.fields(database, sep="\t"))
-        geneSetFrame <- read.table(database,header=FALSE,fill=TRUE,col.names=1:maxColumns,sep="\t",quote="",colClasses = "character")
+        databaseSplit <- strsplit(database,split="[.]")[[1]]
+        databaseExt <- databaseSplit[length(databaseSplit)]
+        if(databaseExt=="gmx") {
+            geneSetFrame <- read.table(database,header=FALSE,fill=TRUE,sep="\t",quote="",colClasses = "character")
+            geneSetFrame <- t(geneSetFrame)
+        } else if(databaseExt=="gmt") {
+            maxColumns <- max(count.fields(database, sep="\t",quote=""))
+            geneSetFrame <- read.table(database,header=FALSE,fill=TRUE,col.names=1:maxColumns,sep="\t",quote="",colClasses = "character")
+        } else {
+            stop("Error: A custom gene set must be a .gmt or .gmx file.")
+        }
         rownames(geneSetFrame) <- geneSetFrame[,1]
         geneSetFrame <- geneSetFrame[,c(-1,-2)]
         geneSetFrame <- as.matrix(geneSetFrame)
@@ -126,9 +142,9 @@ findAttractors <- function(myEset, cellTypeTag, min.pwaysize=5, annotation="illu
             #print(pway.vals)
             t.test(pway.vals, global)$p.value
         }
-        custom.incidence.matrix <- buildCustomIncidenceMatrix(geneSetFrame.convert, rownames(dat.detect.wkegg),databaseGeneFormat,expressionSetGeneFormat) # create incidence matrix
+        custom.incidence.matrix <- buildCustomIncidenceMatrix(geneSetFrame.convert, rownames(dat.detect.wkegg),databaseGeneFormat,expressionSetGeneFormat,rownames(geneSetFrame)) # create incidence matrix
         keep.pways <- apply(custom.incidence.matrix, 1, sum) >= min.pwaysize
-        custom.incidence.matrix <- custom.incidence.matrix[keep.pways,] # filter incidence matrix
+        custom.incidence.matrix <- custom.incidence.matrix[keep.pways,,drop=FALSE] # filter incidence matrix
 
         t.pvals <- apply(custom.incidence.matrix, 1, evalPway, global=fstat)
         t.pvals <- p.adjust(t.pvals, "BH")
@@ -173,7 +189,10 @@ findAttractors <- function(myEset, cellTypeTag, min.pwaysize=5, annotation="illu
             gene.hits <- ensemblToEntrez$ENTREZID
             #gene.hits <- as.list(combinedRows$x)
         }
-        gene.hits <- unique(as.numeric(gene.hits)[!is.na(as.numeric(gene.hits))])
+        gene.hits.uni <- unique(as.numeric(gene.hits)[!is.na(as.numeric(gene.hits))])
+        names(gene.hits.uni) <- names(gene.hits[match(gene.hits.uni,gene.hits)])
+        gene.hits <- gene.hits.uni
+        #gene.hits <- gene.hits[-which(is.na(gene.hits))]
         path.hits <- mget(intersect(gene.hits, ls(reactomeEXTID2PATHID)),reactomeEXTID2PATHID) #get all pathways
         list.wpway <- sort(names(path.hits)[unlist(sapply(path.hits, flagPwayExists))]) # only get entrez genes that are in pathways
         all.pways <- unlist(mget(list.wpway, reactomeEXTID2PATHID))
@@ -238,10 +257,13 @@ findAttractors <- function(myEset, cellTypeTag, min.pwaysize=5, annotation="illu
         }
     }
 	# making expression data object for pathway database annotated probes only
-    if(analysis=="RNAseq" | database=="reactome") {
+    if(analysis=="RNAseq") {
         allEntrezGenes <- ensemblToEntrez$ENTREZID
         names(allEntrezGenes) <- ensemblToEntrez[,1] # you can have many pathways with a single entrez gene.
         dat.detect.wkegg <- dat.fr[unique(names(allEntrezGenes[allEntrezGenes %in% list.wpway])),] # find which entrez IDs are in list.wpway and then get ensembl names of them and expression data
+    } else if(database=="reactome") {
+        dat.detect.wkegg <- dat.fr[names(gene.hits[gene.hits %in% list.wpway]),]
+        rownames(dat.detect.wkegg) <- gene.hits[gene.hits %in% list.wpway]
     } else {
         dat.detect.wkegg <- dat.fr[rownames(dat.fr) %in% list.wpway,] # get all probes that are actually in a kegg pathway that are in your data set
     }
@@ -249,6 +271,10 @@ findAttractors <- function(myEset, cellTypeTag, min.pwaysize=5, annotation="illu
 
 	# make geneset incidience matrix
 	kegg.incidence.matrix <- buildKeggIncidenceMatrix(all.pways, rownames(dat.detect.wkegg), annotation, database, analysis, envPos,expressionSetGeneFormat)
+    if(database=="reactome" & analysis=="microarray") {
+        colnames(kegg.incidence.matrix) <- names(gene.hits)[match(gene.hits[gene.hits %in% colnames(kegg.incidence.matrix)],colnames(kegg.incidence.matrix))] # switch colnames to probe IDs again
+        rownames(dat.detect.wkegg) <- names(gene.hits)[match(gene.hits[gene.hits %in% rownames(dat.detect.wkegg)],rownames(dat.detect.wkegg))]
+    }
 
 	keep.pways <- apply(kegg.incidence.matrix, 1, sum) >= min.pwaysize 
 	kegg.incidence.matrix <- kegg.incidence.matrix[keep.pways,]
@@ -368,7 +394,11 @@ buildKeggIncidenceMatrix <- function(kegg.ids, gene.ids, annotation, database, a
         require(annotation, character.only=TRUE)
         ann <- strsplit(annotation, ".db")[[1]]
         path2probeEnv <- get(paste(ann, "PATH2PROBE", sep=""))
-        pway.genes <- mget(kegg.ids, path2probeEnv) #a list of pathways that has each probe in the pathway
+        if(database=="reactome") {
+            pway.genes <- mget(kegg.ids, reactomePATHID2EXTID)
+        } else { # database == kegg
+            pway.genes <- mget(kegg.ids, path2probeEnv) #a list of pathways that has each probe in the pathway
+        }
 		
     }
     convert.to.row <- function(x.genes, row.genes, envPos,expressionSetGeneFormat){ # x.genes are list of pathways that has each gene. row.genes are all genes that have a kegg annotation
