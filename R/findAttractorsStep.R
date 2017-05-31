@@ -272,8 +272,10 @@ findAttractors <- function(myEset, cellTypeTag, min.pwaysize=5, annotation="illu
 	# make geneset incidience matrix
 	kegg.incidence.matrix <- buildKeggIncidenceMatrix(all.pways, rownames(dat.detect.wkegg), annotation, database, analysis, envPos,expressionSetGeneFormat)
     if(database=="reactome" & analysis=="microarray") {
-        colnames(kegg.incidence.matrix) <- names(gene.hits)[match(gene.hits[gene.hits %in% colnames(kegg.incidence.matrix)],colnames(kegg.incidence.matrix))] # switch colnames to probe IDs again
-        rownames(dat.detect.wkegg) <- names(gene.hits)[match(gene.hits[gene.hits %in% rownames(dat.detect.wkegg)],rownames(dat.detect.wkegg))]
+        #colnames(kegg.incidence.matrix) <- names(gene.hits)[match(gene.hits[gene.hits %in% colnames(kegg.incidence.matrix)],colnames(kegg.incidence.matrix))] # switch colnames to probe IDs again
+        #rownames(dat.detect.wkegg) <- names(gene.hits)[match(gene.hits[gene.hits %in% rownames(dat.detect.wkegg)],rownames(dat.detect.wkegg))]
+        colnames(kegg.incidence.matrix) <- names(gene.hits[match(colnames(kegg.incidence.matrix), as.character(gene.hits))])
+        rownames(dat.detect.wkegg) <- names(gene.hits[match(rownames(dat.detect.wkegg), as.character(gene.hits))])
     }
 
 	keep.pways <- apply(kegg.incidence.matrix, 1, sum) >= min.pwaysize 
