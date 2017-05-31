@@ -20,6 +20,8 @@ importFrom(limma, contrasts.fit, eBayes, lmFit, makeContrasts,
 importFrom(stats, anova, as.dist, as.formula, cor, cutree, lm,
            model.matrix, p.adjust, t.test)
 
+importFrom("methods", "new")
+
 export(filterDataSet, findAttractors, removeFlatGenes, findSynexprs, plotsynexprs, findCorrPartners, calcFuncSynexprs)
 
 exportClasses(SynExpressionSet, AttractorModuleSet)
