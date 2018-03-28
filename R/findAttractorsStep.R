@@ -101,11 +101,20 @@ findAttractors <- function(myEset, cellTypeTag, min.pwaysize=5, annotation="illu
         geneSetFrame <- geneSetFrame[,c(-1,-2)]
         geneSetFrame <- as.matrix(geneSetFrame)
         # convert each of the gene symbols, entrez IDs, etc to same type of gene IDs (ex. ensembl) as in your original data set
+        if(databaseGeneFormat!=expressionSetGeneFormat) {
         f <- file()
         sink(file = f,type="message")
         geneSetFrame.convert <- apply(geneSetFrame, 1, function(x) select(get(annotation,envPos, as.environment(envPos)), keys=x[x !=""], keytype=databaseGeneFormat, columns=c(databaseGeneFormat,expressionSetGeneFormat) )[,2])
         sink(type="message")
         close(f)
+        } else {
+            geneSetFrame.convert <- vector(mode = "list", length = nrow(geneSetFrame))
+            names(geneSetFrame.convert) <- rownames(geneSetFrame)
+            for(k in 1:nrow(geneSetFrame)) {
+                myPathway_temp <- geneSetFrame[1,][geneSetFrame[1,]!=""]
+                geneSetFrame.convert[[k]] <- myPathway_temp
+            }
+        }
         geneSetFrame.convert <- lapply(geneSetFrame.convert, function(x) x[!is.na(x)])
         geneNames <- unique(unlist(geneSetFrame.convert))
         #custom.incidence.matrix <- buildCustomIncidenceMatrix(geneSetFrame.convert, geneNames,analysis,databaseGeneFormat,expressionSetGeneFormat) # create incidence matrix
