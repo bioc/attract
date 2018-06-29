@@ -1,23 +1,28 @@
-changes in version attract 1.33.1 (2018-05-15)
+changes in version 1.33.2 (2018-06-29)
+---------------------------
++ Fix NEWS
++ change maintainer email
+
+changes in version 1.33.1 (2018-05-15)
 ---------------------------
 + Fix NEWS
 
-changes in version attract 1.31.1 (2018-03-28)
+changes in version 1.31.1 (2018-03-28)
 ---------------------------
 + Fix bug when custom gene set and expression set both have same type of gene IDs
 
-changes in version attract 1.29.1 (2017-05-31)
+changes in version 1.29.1 (2017-05-31)
 ---------------------------
 + Fix bug when using microarray data and the reactive gene sets.
 
-changes in version attract 1.25.2 (2016-10-13)
+changes in version 1.25.2 (2016-10-13)
 ---------------------------
 + Update attract to accept MsigDB data sets in both .gmt and .gmx file formats. Before it was just .gmt files. An error is thrown if custom gene sets are not in .gmt or .gmx format. Also update attract to correct bug when you use reactome database and microarray data.
 
-changes in version attract 1.25.1 (2016-05-23)
+changes in version 1.25.1 (2016-05-23)
 ---------------------------
 + Corrected bug found when using MsigDB data sets instead of KEGG and reactome. Also added expressionSetGeneFormat to findAttractors and calcFuncSynexprs functions. The vignette was also changed to reflect the update.
 
-changes in version attract 1.23.1 (2016-03-14)
+changes in version 1.23.1 (2016-03-14)
 ---------------------------
 + Updated attract package for use with RNAseq data
