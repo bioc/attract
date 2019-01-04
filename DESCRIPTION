@@ -2,7 +2,7 @@ Package: attract
 Type: Package
 Title: Methods to Find the Gene Expression Modules that Represent the
         Drivers of Kauffman's Attractor Landscape
-Version: 1.35.0
+Version: 1.35.1
 Date: 2018-06-29
 Author: Jessica Mar
 Maintainer: Samuel Zimmerman <samuel.e.zimmerman@gmail.com>
@@ -20,7 +20,7 @@ Depends: R (>= 3.4.0), AnnotationDbi
 Imports: Biobase, limma, cluster, GOstats, graphics, stats,
         reactome.db, KEGGREST, org.Hs.eg.db, utils, methods
 Suggests: illuminaHumanv1.db
-biocViews: KEGG, Reactome, GeneExpression, Pathways, GeneSetEnrichment,
+biocViews: ImmunoOncology, KEGG, Reactome, GeneExpression, Pathways, GeneSetEnrichment,
         Microarray, RNASeq
 NeedsCompilation: no
 Packaged: 2016-06-09 14:02:41 UTC; SamEZ
