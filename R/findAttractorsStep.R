@@ -321,7 +321,12 @@ findAttractors <- function(myEset, cellTypeTag, min.pwaysize=5, annotation="illu
     namesInMatrix <- KEGGPATHNAMES[sapply(names(KEGGPATHNAMES), function(x) x %in% rownames(kegg.incidence.matrix))]
     correctOrder <- sapply(rownames(kegg.incidence.matrix), function(x) match(x, names(namesInMatrix))) #indexes of where the pathway names are in which rows of incidence matrix
     namesInMatrix <- namesInMatrix[correctOrder] # sort the names of the pathways by the rownames of the kegg incidence matrix
-	tab <- data.frame(KEGGID = rownames(kegg.incidence.matrix), KEGGNAME = namesInMatrix, AdjustedPvalues = t.pvals, NumberDetectedGenes = size)
+    # if pway name not found substitute the number instead
+    if(sum(is.na(namesInMatrix))>0) {
+      names(namesInMatrix)[which(is.na(namesInMatrix))] = names(correctOrder[which(is.na(namesInMatrix))])
+      namesInMatrix[which(is.na(namesInMatrix))] = "NA"
+    }
+	  tab <- data.frame(KEGGID = rownames(kegg.incidence.matrix), KEGGNAME = namesInMatrix, AdjustedPvalues = t.pvals, NumberDetectedGenes = size)
     } else if(database=="reactome") {
         #tab <- data.frame(KEGGID = rownames(kegg.incidence.matrix), KEGGNAME = unlist(mget(rownames(kegg.incidence.matrix), reactomePATHID2NAME)), AdjustedPvalues = t.pvals, NumberDetectedGenes = size)
         f <- file()
